@@ -6,9 +6,9 @@ public class StockRecord implements Serializable{
     Date date;
     double open, close;
 
-    public StockRecord(String stockName, Date d, double open, double close){
+    public StockRecord(String stockName, Date date, double open, double close){
         this.name = stockName;
-        this.date = d;
+        this.date = date;
         this.open = open;
         this.close = close;
 
@@ -16,6 +16,6 @@ public class StockRecord implements Serializable{
 
     @Override
     public String toString(){
-        return this.name + " " + this.date.toString() + " " + open + " " + close;
+        return this.name + " " + this.date + " " + open + " " + close;
     }
 }
