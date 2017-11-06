@@ -10,7 +10,6 @@ public class Client {
 
     // Your data here
 
-
     public Client(String[] servers, int[] ports){
         this.servers = servers;
         this.ports = ports;
@@ -50,12 +49,24 @@ public class Client {
 
     // RMI handlers
     public Integer Get(String key){
-        // Your code here
+    	Response response;
+    	int id = 0;
+    	Request request = new Request("Get", key);
+    	while ((response = Call("Get", request, id)) == null){
+    		id = (id + 1) % servers.length;
+    	}
+    	return response.getValue();
 
     }
 
     public boolean Put(String key, Integer value){
-        // Your code here
+    	Response response;
+    	int id = 0;
+    	Request request = new Request("Put", key, value);
+    	while ((response = Call("Get", request, id)) == null){
+    		id = (id + 1) % servers.length;
+    	}
+    	return response.isSuccessful();
     }
 
 }

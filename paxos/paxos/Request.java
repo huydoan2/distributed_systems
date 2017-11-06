@@ -10,7 +10,37 @@ import java.io.Serializable;
 public class Request implements Serializable {
     static final long serialVersionUID=1L;
     // Your data here
-
+    private int seq, proposal, maxDone = -1;
+    private Object value;
 
     // Your constructor and methods here
+    public Request(int seq, int proposal) {
+        this.seq = seq;
+        this.proposal = proposal;
+        this.value = null;
+    }
+
+    public Request(int seq, int proposal, Object value) {
+        this.seq = seq;
+        this.proposal = proposal;
+        this.value = value;
+
+    }
+    
+    public Request(int seq, int proposal, int maxDone, Object value) {
+    	this.seq = seq;
+        this.proposal = proposal;
+        this.value = value;
+        this.maxDone = maxDone;
+    }
+
+    public int getSeq(){
+        return this.seq;
+    }
+
+    public int getProposal() { return this.proposal; }
+
+    public Object getValue() { return this.value; }
+    
+    public int getMaxDone() { return this.maxDone; }
 }

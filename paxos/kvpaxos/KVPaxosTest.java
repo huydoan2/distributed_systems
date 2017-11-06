@@ -12,6 +12,8 @@ public class KVPaxosTest {
 
     public void check(Client ck, String key, Integer value){
         Integer v = ck.Get(key);
+        System.out.println("Excepted: " + value);
+        System.out.println("Got: " + v);
         assertTrue("Get(" + key + ")->" + v + ", expected " + value, v.equals(value));
     }
 

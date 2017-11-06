@@ -1,8 +1,13 @@
 package paxos;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.server.UnicastRemoteObject;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -22,8 +27,16 @@ public class Paxos implements PaxosRMI, Runnable{
     AtomicBoolean unreliable;// for testing
 
     // Your data here
-
-
+    AtomicInteger currentProposal;
+    AtomicInteger highestInstanceSequence;
+    AtomicInteger myMaxDone, paxosMaxDone;
+    
+    // Paxos DS
+    ConcurrentHashMap<Integer, PaxosProposer> sequenceToProposer;
+    ConcurrentHashMap<Integer, PaxosAcceptor> sequenceToAcceptor;
+    ConcurrentHashMap<Integer, PaxosDecision> sequenceToDecision;
+    ConcurrentHashMap<Integer, Integer> sequenceToDone;
+    
     /**
      * Call the constructor to create a Paxos peer.
      * The hostnames of all the Paxos peers (including this one)
@@ -38,8 +51,16 @@ public class Paxos implements PaxosRMI, Runnable{
         this.dead = new AtomicBoolean(false);
         this.unreliable = new AtomicBoolean(false);
 
-        // Your initialization code here
 
+        // Your initialization code here
+        this.currentProposal = new AtomicInteger(1);
+        highestInstanceSequence = new AtomicInteger(-1);
+        myMaxDone = new AtomicInteger(-1);
+        paxosMaxDone = new AtomicInteger(-1);
+        // Testing
+        sequenceToProposer = new ConcurrentHashMap<>();
+        sequenceToAcceptor = new ConcurrentHashMap<>();
+        sequenceToDecision = new ConcurrentHashMap<>();
 
         // register peers, do not modify this part
         try{
@@ -107,29 +128,94 @@ public class Paxos implements PaxosRMI, Runnable{
      */
     public void Start(int seq, Object value){
         // Your code here
+        try{
+            mutex.lock();
+            if (seq > highestInstanceSequence.get()) {
+            	highestInstanceSequence.set(seq);
+            }
+            Thread t = new Thread(new PaxosRunner(this, seq, this.currentProposal.get(), value));
+            t.start();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            mutex.unlock();
+        }
     }
 
     @Override
     public void run(){
-        //Your code here
-    }
+        // Using PaxosRunner to run it
+        }
+
 
     // RMI handler
     public Response Prepare(Request req){
-        // your code here
-
+       Response resp;
+       
+       // Create acceptor for paxos instance if it doesn't exist
+       if (! this.sequenceToAcceptor.containsKey(req.getSeq())) {
+    	   PaxosAcceptor acceptor = new PaxosAcceptor();
+    	   this.sequenceToAcceptor.put(req.getSeq(), acceptor);
+       }
+       
+       // If request proposal higher than all seen proposal
+       if (req.getProposal() > this.sequenceToAcceptor.get(req.getSeq()).preparedProposalNum) {
+    	   this.sequenceToAcceptor.get(req.getSeq()).preparedProposalNum = req.getProposal();
+    	   resp = new Response(req.getSeq(), this.sequenceToAcceptor.get(req.getSeq()).acceptedProposalNum, this.sequenceToAcceptor.get(req.getSeq()).value);
+       }
+       else {
+    	   resp = new Response(req.getSeq(), req.getProposal(), null, true);
+       }
+       return resp;
+       
     }
 
     public Response Accept(Request req){
-        // your code here
+        // ACCEPT IF THIS IS TRUE
+        Response resp;
+        if (req.getMaxDone() != -1 && req.getMaxDone() < myMaxDone.get()){
+        	myMaxDone.set(req.getMaxDone());
+        }
+        
+        if (req.getProposal() >= this.sequenceToAcceptor.get(req.getSeq()).preparedProposalNum){
+        	this.sequenceToAcceptor.get(req.getSeq()).preparedProposalNum = req.getProposal();
+        	this.sequenceToAcceptor.get(req.getSeq()).acceptedProposalNum = req.getProposal();
+        	this.sequenceToAcceptor.get(req.getSeq()).value = req.getValue();
+        	resp = new Response(req.getSeq(), req.getProposal(), myMaxDone.get(), req.getValue());
+        }
+        else {
+        	resp = new Response(req.getSeq(), this.sequenceToAcceptor.get(req.getSeq()).preparedProposalNum, myMaxDone.get(), null, true);
+        }
+
+        return resp;
 
     }
 
     public Response Decide(Request req){
-        // your code here
-
+    	if (! this.sequenceToDecision.containsKey(req.getSeq())) {
+    		PaxosDecision decision = new PaxosDecision();
+    		decision.state = State.Decided;
+    		decision.value = req.getValue();
+    		this.sequenceToDecision.put(req.getSeq(), decision);
+    	}
+    	else {
+    		this.sequenceToDecision.get(req.getSeq()).state = State.Decided;
+    		this.sequenceToDecision.get(req.getSeq()).value = req.getValue();
+    	}
+    	
+    	if (req.getMaxDone() != -1 && req.getMaxDone() <= this.myMaxDone.get()){
+    		this.paxosMaxDone.set(req.getMaxDone());
+    		removeStaleData();
+    	}
+    	return null;
     }
 
+    public void removeSequence(int seq){
+    	this.sequenceToProposer.remove(seq);
+    	this.sequenceToAcceptor.remove(seq);
+    	this.sequenceToDecision.remove(seq);
+    	this.sequenceToDone.remove(seq);
+    }
     /**
      * The application on this machine is done with
      * all instances <= seq.
@@ -137,7 +223,24 @@ public class Paxos implements PaxosRMI, Runnable{
      * see the comments for Min() for more explanation.
      */
     public void Done(int seq) {
-        // Your code here
+    	
+    	if (seq > myMaxDone.get()) {
+    		myMaxDone.set(seq);
+    	}
+    	
+    	
+        
+    }
+    
+    private void removeStaleData(){
+    	
+    	/*ArrayList<Integer> sequences = new ArrayList<Integer>(this.seqHighestProposalAccepted.keySet());
+    	Collections.sort(sequences);
+    	for (int i: sequences){
+    		if (i > this.paxosMaxDone.get())
+    			break;
+    		removeSequence(i);
+    	}*/
     }
 
 
@@ -148,6 +251,7 @@ public class Paxos implements PaxosRMI, Runnable{
      */
     public int Max(){
         // Your code here
+        return highestInstanceSequence.get();
     }
 
     /**
@@ -179,11 +283,9 @@ public class Paxos implements PaxosRMI, Runnable{
      * instances.
      */
     public int Min(){
-        // Your code here
+        return paxosMaxDone.get() + 1;
 
     }
-
-
 
     /**
      * the application wants to know whether this
@@ -194,7 +296,9 @@ public class Paxos implements PaxosRMI, Runnable{
      */
     public retStatus Status(int seq){
         // Your code here
-
+    	if (this.sequenceToDecision.containsKey(seq))
+    		return new retStatus(this.sequenceToDecision.get(seq).state, this.sequenceToDecision.get(seq).value);
+    	return new retStatus(State.Pending, null);
     }
 
     /**
@@ -237,6 +341,153 @@ public class Paxos implements PaxosRMI, Runnable{
     public boolean isunreliable(){
         return this.unreliable.get();
     }
+   
+    class PaxosProposer {
+    	public int myProposalNum, numOfAccepts, highestProposalSeen;
+    	public Object myValue = null, proposedValue = null;
+    }
+    
+    class PaxosAcceptor {
+    	public Object value = null;
+    	public int acceptedProposalNum = -1;
+    	public int preparedProposalNum = -1;
+    }
+    
+    class PaxosDecision {
+    	public Object value = null;
+    	public State state = State.Pending;
+    }
+    
+    class PaxosRunner implements Runnable {
+    	private final int threadSequence;
+    	private Paxos paxosInstance;
+    	PaxosProposer proposer;
+    	PaxosAcceptor acceptor;
+    	PaxosDecision decision;
+    	public PaxosRunner(Paxos paxos, int seq, int currentProposal, Object value) {
+    		this.threadSequence = seq;
+    		this.paxosInstance = paxos;
 
+    		// Initialize the proposer, acceptor, decider for this paxos instance w/ sequence
+    		proposer = new PaxosProposer();
+    		proposer.myValue = value;
+    		proposer.highestProposalSeen = -1;
+    		proposer.myProposalNum = currentProposal;
+    		proposer.numOfAccepts = 0;
+    		acceptor = new PaxosAcceptor();
+    		decision = new PaxosDecision();
+    		decision.state = State.Pending;
+    		decision.value = null;
+    		paxosInstance.sequenceToProposer.put(seq, proposer);
+    		paxosInstance.sequenceToAcceptor.put(seq, acceptor);
+    		paxosInstance.sequenceToDecision.put(seq, decision);
+    	}
+    	
+		@Override
+		public void run() {
+		
+			// Decider on this instance is Pending
+			while (paxosInstance.sequenceToDecision.get(threadSequence).state == State.Pending){
+				if (paxosInstance.isDead()){
+					return;
+				}
+				boolean startNewProposal = false;
+				proposer.numOfAccepts = 0;
+				Request proposalRequest = new Request(threadSequence, proposer.myProposalNum);
+				for (int i = 0; i < paxosInstance.peers.length; ++i) {
+					Response response;
+					if (i == paxosInstance.me)
+						response = paxosInstance.Prepare(proposalRequest);
+					else
+						response = Call("Prepare", proposalRequest, i);
+					try{
+						if (response.isRejected()) {
+							proposer.myProposalNum = response.getProposal() + 1;
+							startNewProposal = true;
+							break;
+						}
+					}
+					catch (Exception e) {
+						System.out.println("Acceptor is dead");
+						continue;
+					}
+					
+					proposer.numOfAccepts++;
+					if (response.getValue() != null) {
+						if (response.getProposal() > proposer.highestProposalSeen) {
+							proposer.highestProposalSeen = response.getProposal();
+							proposer.proposedValue = response.getValue();
+						}
+					}
+				}
+				// Start proposing again, if rejected by 1
+				if (startNewProposal)
+					continue;
+				
+				// Majority accepted proposal
+				if (proposer.numOfAccepts > Math.floor(paxosInstance.peers.length/2.0)){
+					// Count how many acceptances from the beginning
+					proposer.numOfAccepts = 0;
+					if (proposer.proposedValue == null)
+						proposer.proposedValue = proposer.myValue;
+					// Send maxDone here
+					Request acceptRequest = new Request(threadSequence, proposer.myProposalNum, paxosInstance.myMaxDone.get(), proposer.proposedValue);
+					// Send Accept messages to acceptors
+					for (int i = 0; i < paxosInstance.peers.length; ++i){
+						Response response;
+						// Get max from all here
+						if (i == paxosInstance.me)
+							response = paxosInstance.Accept(acceptRequest);
+						else
+							response = Call("Accept", acceptRequest, i);
+						if (response == null){
+							System.out.println("Acceptor is dead");
+							continue;
+						}
+						if (!response.isRejected())
+							proposer.numOfAccepts++;
+						
+						if (response.getMaxDone() != -1 && response.getMaxDone() < paxosInstance.myMaxDone.get()) {
+							paxosInstance.myMaxDone.set(response.getMaxDone());
+						}
+							
+					}
+					
+					if (proposer.numOfAccepts > Math.floor(paxosInstance.peers.length/2.0)){
+						// Count how many acceptances from the beginning
+						proposer.numOfAccepts = 0;
+						
+						Request decisionRequest = new Request(threadSequence, proposer.myProposalNum, paxosInstance.myMaxDone.get(), proposer.proposedValue);
+						// Send Accept messages to acceptors
+						for (int i = 0; i < paxosInstance.peers.length; ++i){
+							// Run Done here, to remove old instances
+							if (i == paxosInstance.me)
+								paxosInstance.Decide(decisionRequest);
+							else
+								Call("Decide", decisionRequest, i);
+							
+								
+						}
+					}
+				}
+				
+				proposer.myProposalNum++;
+
+			}
+			try {
+				paxosInstance.mutex.lock();
+				if (proposer.myProposalNum > paxosInstance.currentProposal.get())
+					paxosInstance.currentProposal.set(proposer.myProposalNum + 1);
+			}
+			catch (Exception e) {
+				
+			}
+			finally {
+				paxosInstance.mutex.unlock();
+			}
+			
+		}
+    	
+    }
 
 }

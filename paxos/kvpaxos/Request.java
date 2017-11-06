@@ -9,8 +9,29 @@ import java.io.Serializable;
 public class Request implements Serializable {
     static final long serialVersionUID=11L;
     // Your data here
-
-
+    private String op, key;
+    private Integer value;
     // Your constructor and methods here
+    Request(String op, String key){
+    	this.op = op;
+    	this.key = key;
+    	value = null;
+    }
+    Request(String op, String key, Integer value){
+    	this.op = op;
+    	this.key = key;
+    	this.value = value;
+    }
+    
+    String getOp(){
+    	return op;
+    }
+    
+    String getKey(){
+    	return key;
+    }
+    Integer getValue(){
+    	return value;
+    }
 
 }
