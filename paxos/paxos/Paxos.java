@@ -234,13 +234,13 @@ public class Paxos implements PaxosRMI, Runnable{
     
     private void removeStaleData(){
     	
-    	/*ArrayList<Integer> sequences = new ArrayList<Integer>(this.seqHighestProposalAccepted.keySet());
+    	ArrayList<Integer> sequences = new ArrayList<Integer>(Max());
     	Collections.sort(sequences);
     	for (int i: sequences){
     		if (i > this.paxosMaxDone.get())
     			break;
     		removeSequence(i);
-    	}*/
+    	}
     }
 
 
@@ -408,7 +408,6 @@ public class Paxos implements PaxosRMI, Runnable{
 						}
 					}
 					catch (Exception e) {
-						System.out.println("Acceptor is dead");
 						continue;
 					}
 					
@@ -441,7 +440,6 @@ public class Paxos implements PaxosRMI, Runnable{
 						else
 							response = Call("Accept", acceptRequest, i);
 						if (response == null){
-							System.out.println("Acceptor is dead");
 							continue;
 						}
 						if (!response.isRejected())
