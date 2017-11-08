@@ -24,6 +24,11 @@ public class Response implements Serializable {
     	this.successful = success;
     }
     
+    Response (String key, boolean success) {
+    	this.key = key;
+    	this.successful = success;
+    }
+    
     String getKey(){
     	return key;
     }

@@ -11,6 +11,7 @@ public class Request implements Serializable {
     // Your data here
     private String op, key;
     private Integer value;
+    
     // Your constructor and methods here
     Request(String op, String key){
     	this.op = op;

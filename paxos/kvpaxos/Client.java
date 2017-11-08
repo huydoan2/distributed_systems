@@ -63,7 +63,7 @@ public class Client {
     	Response response;
     	int id = 0;
     	Request request = new Request("Put", key, value);
-    	while ((response = Call("Get", request, id)) == null){
+    	while ((response = Call("Put", request, id)) == null){
     		id = (id + 1) % servers.length;
     	}
     	return response.isSuccessful();
