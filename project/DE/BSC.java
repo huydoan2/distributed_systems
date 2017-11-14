@@ -9,6 +9,10 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,7 +21,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class BSC implements  Runnable{
+import paxos.PaxosRMI;
+import paxos.Request;
+import paxos.Response;
+
+public class BSC implements  Runnable, BSCRMI{
 
     int[] T;        //container to store all the votes
     int[] vote;     // ranking of k candidates
@@ -25,36 +33,72 @@ public class BSC implements  Runnable{
     int[] ports;    // host port
     int pid;        // me
 
+    Registry registry;
+    BSCRMI stub;
+    
     BSC(int pid, String[] peers, int[] ports){
         this.pid = pid;
         this.peers = peers;
         this.ports = ports;
+        
+        
+        try{
+            System.setProperty("java.rmi.server.hostname", this.peers[this.pid]);
+            registry = LocateRegistry.createRegistry(this.ports[this.pid]);
+            stub = (BSCRMI) UnicastRemoteObject.exportObject(this, this.ports[this.pid]);
+            registry.rebind("BSC", stub);
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+        
+        
     }
+    
+    public Response Call(String rmi, Request req, int id){
+        Response callReply = null;
+
+        BSCRMI stub;
+        try{
+            Registry registry=LocateRegistry.getRegistry(this.ports[id]);
+            stub= (BSCRMI) registry.lookup("BSC");
+            if(rmi.equals("Vote"))
+                callReply = stub.Vote(req);
+            else
+                System.out.println("Wrong parameters!");
+        } catch(Exception e){
+            return null;
+        }
+        return callReply;
+    }
+    
 
     @Override
     public void run(){
         // setup T and vote first
 
 
-        ServerSocket listener = new ServerSocket(ports[pid]);
+      
 
         T[pid] = vote[0];
-        for(int j = 0; j < T.length(); ++j){
+        for(int j = 0; j < peers.length; ++j){
+        	
             if(j == pid)
                 continue;
 
-            Socket s = new Socket(peers[j], ports[j]);
+            Request request = new Request(this.pid, T[pid]);
+            Call("Vote", request, j);
 
-            T[j] = s.getInputStream().
+            //T[j] = s.getInputStream().
 
 
-            try{
-                Socket socket = listener.accept();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+           
 
         }
     }
+
+	@Override
+	public Response Vote(Request req) throws RemoteException {
+		// Req contains pid of process which sent vote and what vote is
+		return null;
+	}
 }
