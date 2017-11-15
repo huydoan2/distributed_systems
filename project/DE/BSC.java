@@ -63,6 +63,10 @@ public class BSC implements  Runnable, BSCRMI{
             stub= (BSCRMI) registry.lookup("BSC");
             if(rmi.equals("Vote"))
                 callReply = stub.Vote(req);
+            else if(rmi.equals("Send"))
+                callReply = stub.Send(req);
+            else if(rmi.equals("Receive"))
+                callReply = stub.Receive(req);
             else
                 System.out.println("Wrong parameters!");
         } catch(Exception e){
@@ -71,13 +75,16 @@ public class BSC implements  Runnable, BSCRMI{
         return callReply;
     }
     
+    public Response Vote(Request req){
+        DE.Response resp = new Response(T[pid]);
+        return resp;
+    }
 
     @Override
     public void run(){
         // setup T and vote first
 
 
-      
 
         T[pid] = vote[0];
         for(int j = 0; j < peers.length; ++j){
@@ -86,13 +93,8 @@ public class BSC implements  Runnable, BSCRMI{
                 continue;
 
             Request request = new Request(this.pid, T[pid]);
-            Call("Vote", request, j);
-
-            //T[j] = s.getInputStream().
-
-
-           
-
+            Response resp = Call("Vote", request, j);
+            T[j] = resp.getVote();
         }
     }
 

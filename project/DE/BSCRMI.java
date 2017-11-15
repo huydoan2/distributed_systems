@@ -13,5 +13,5 @@ import java.rmi.RemoteException;
 public interface BSCRMI extends Remote{
     Response Vote(Request req) throws RemoteException;
 
-	
+
 }
