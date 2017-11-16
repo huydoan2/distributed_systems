@@ -4,13 +4,19 @@ import java.io.Serializable;
 
 public class Response implements Serializable {
 	static final long serialVersionUID=2L;
-	private Integer vote;
-
-	Response(Integer value){
+	
+	private int pid;
+	String vote;
+	Response(int pid, String value){
 		this.vote = value;
+		this.pid = pid;
 	}
 
-	public int getVote(){
-		return this.vote;
+	public String getVote(){
+		return vote;
+	}
+	
+	public int getPid(){
+		return pid;
 	}
 }
