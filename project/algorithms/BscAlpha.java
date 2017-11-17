@@ -2,7 +2,7 @@
  * Created by huydo on 11/13/2017.
  */
 
-package DE;
+package algorithms;
 import java.nio.ByteBuffer;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -11,6 +11,11 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.locks.ReentrantLock;
+
+import DE.BSCRMI;
+import DE.Request;
+import DE.Response;
+import DE.SecureTransfer;
 
 
 public class BscAlpha implements  Runnable, BSCRMI{

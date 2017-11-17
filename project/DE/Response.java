@@ -7,7 +7,7 @@ public class Response implements Serializable {
 	
 	private int pid;
 	String vote;
-	Response(int pid, String value){
+	public Response(int pid, String value){
 		this.vote = value;
 		this.pid = pid;
 	}

@@ -11,23 +11,23 @@ public class Request implements Serializable {
 	private byte[] secretKey;
 	private SecureTransfer secure;
 	
-	Request(int pid, String voteValue){
+	public Request(int pid, String voteValue){
 		this.pid = pid;
 		this.voteValue = voteValue;
 	}
 	
-	Request(int pid, boolean done){
+	public Request(int pid, boolean done){
 		this.pid = pid;
 		this.doneReq = done;
 		
 	}
 	
-	Request(int pid, byte[] key){
+	public Request(int pid, byte[] key){
 		this.pid = pid;
 		this.secretKey = key;
 	}
 	
-	Request(int pid, SecureTransfer secure){
+	public Request(int pid, SecureTransfer secure){
 		this.pid = pid;
 		this.secure = secure;
 	}
