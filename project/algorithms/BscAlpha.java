@@ -16,6 +16,7 @@ import DE.BSCRMI;
 import DE.Request;
 import DE.Response;
 import DE.SecureTransfer;
+import DE.VoteType;
 
 
 public class BscAlpha implements  Runnable, BSCRMI{

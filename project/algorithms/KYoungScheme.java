@@ -4,9 +4,13 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import DE.BSCRMI;
@@ -26,6 +30,7 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	// Voting variables
 	// Set of all permutations of k candidates
 	public HashSet<String> P;
+	ConcurrentHashMap<String, Integer> topChoices;
 	
 	String [] ballot;      // will contain agreed upon ballot
 	String [] myVoteRank;
@@ -39,7 +44,7 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
     
     
     // Variables for exchanging votes
-    int receivedVotes, receivedKeys, receivedDones;
+    AtomicInteger receivedVotes, receivedKeys, receivedDones;
     Thread runner;
     
     static ReentrantLock mutex = new ReentrantLock();
@@ -61,11 +66,14 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
         // Contains my vote ranking
         myVoteRank = k.split("");
         
-  
+        topChoices = new ConcurrentHashMap<String, Integer>();
+        
         maxScore = 0;
         maxRank = null;
         randomGenerator = new Random();
-        
+        receivedVotes = new AtomicInteger(0);
+		receivedKeys = new AtomicInteger(0);
+		receivedDones = new AtomicInteger(0);
         secure = new SecureTransfer();
         
         
@@ -113,14 +121,28 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 
 	@Override
 	public Response Vote(Request req) throws RemoteException {
-		ballot[req.getPid()] = req.getVoteValue();
+		
 		try {
 			// Received encrypted vote
 			// Respond with your own encrypted vote
-			Response resp = new Response(pid, secure.encrypt(ballot[pid]));
-			this.receivedVotes++;
-			return resp;
-			
+			Response resp;
+			if (req.getVoteType() == VoteType.MY_TOP){
+				ballot[req.getPid()] = req.getVoteValue();
+				resp = new Response(pid, secure.encrypt(ballot[pid]));
+
+			}
+			else {
+				String topVotes = TopTwoVotes();
+				Integer occur = topChoices.get(req.getFirstChoice());
+				topChoices.put(req.getFirstChoice(), occur != null ? occur+1 : 1);
+				occur = topChoices.get(req.getSecondChoice());
+				topChoices.put(req.getSecondChoice(), occur != null ? occur+1 : 1);
+				
+				resp = new Response(pid, topVotes.split("")[0],topVotes.split("")[1]);
+			}
+				
+			this.receivedVotes.getAndIncrement();
+			return resp;	
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -131,17 +153,17 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 
 	@Override
 	public Response Done(Request req) throws RemoteException {
-		this.receivedDones++;
+		this.receivedDones.getAndIncrement();
 		return null;
 	}
 
 	@Override
 	public Response Key(Request req) throws RemoteException {
 		// Print out votes when all received and non decrypted
-				if (this.receivedKeys == 0) {
+				if (this.receivedKeys.get() == 0) {
 					try{
-						BscAlpha.mutex.lock();
-						StringBuilder sb = new StringBuilder();
+						KYoungScheme.mutex.lock();
+						/*StringBuilder sb = new StringBuilder();
 						sb.append("[ ");
 						for (String a: ballot){
 							sb.append(a + " ");
@@ -149,17 +171,17 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 						sb.append(']');
 						System.out.println("Votes in pid (before decryption): " + pid);
 						System.out.println(sb.toString());
-						System.out.println("");
+						System.out.println("");*/
 					} catch (Exception e){
 						
 					}
 					finally {
-						BscAlpha.mutex.unlock();
+						KYoungScheme.mutex.unlock();
 					}
 					
 				}
 				try {
-					this.receivedKeys++;
+					this.receivedKeys.getAndIncrement();
 					ballot[req.getPid()] = req.getSecure().decrypt(ballot[req.getPid()]);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -183,7 +205,6 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
     
 	@Override
 	public void run() {
-		// TODO
 		/*
 		After exchanging their votes using the secret voting mechanism (briefly discussed in Section
 				7), the processes participate in O(f) rounds of agreement to ensure that all the good processes agree on the
@@ -192,17 +213,18 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 				
 		*/
 		
-		System.out.println("Starting vote exchange");
-		exchangeVotes(ballot[pid], VoteType.MY_TOP);
-		System.out.println("Votes exchanged securely");
+		//System.out.println("Starting vote exchange");
+		
+ 		exchangeVotes(ballot[pid], VoteType.MY_TOP);
+		//System.out.println("Votes exchanged securely");
 		
 		
-		// TODO: O(f) rounds of agreement to make sure all correct processes agree on the same ballot
+		// O(f) rounds of agreement to make sure all correct processes agree on the same ballot
 		String topTwoVotes = TopTwoVotes();
-		exchangeVotes(topTwoVotes, VoteType.TOP_TWO);
+		//System.out.println("Starting top 2 vote exchange");
 		
-		// a a a a b b b c   a a a
-		// a a a a b b b c   c c c
+		exchangeVotes(topTwoVotes, VoteType.TOP_TWO);
+		//System.out.println("Finished top 2 vote exchange");
 		
 		
 		StringBuilder sb = new StringBuilder();
@@ -218,8 +240,27 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	
 	
 	private String TopTwoVotes() {
+		HashMap<String, Integer> counterMap = new HashMap<String, Integer>();
 		
-		return null;
+		for (String str: ballot){
+			Integer c = counterMap.get(str);
+			counterMap.put(str, c != null ? c+1 : 1);
+		}
+		int first = 0, second = 0;
+		String f = null, s = null;
+		for (String a: counterMap.keySet()){
+			if (counterMap.get(a) > first){
+				second = first;
+				s = f;
+				first = counterMap.get(a);
+				f = a;
+			}
+			else if (counterMap.get(a) > second){
+				second = counterMap.get(a);
+				s = a;
+			}
+		}
+		return f+s;
 	}
 
 
@@ -245,11 +286,16 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
         return callReply;
     }
 	
-	
+	public void updateChoices(String firstChoice, String secondChoice){
+		// TODO: Move code here
+	}
 	
 	public void exchangeVotes(String vote, VoteType voteType){
-		receivedVotes = receivedKeys = receivedDones = 0;
-	
+
+		
+		String firstBallot = ballot[pid], secondBallot = null;
+		int topFirst = 0, topSecond = 0;
+		
         // Step 1: Send first choice with all
         // We assume that all processes start the democratic election
         // This assumption should not affect the outcome as we can always trigger votes
@@ -259,23 +305,116 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
             if(j == pid)
                 continue;
 
+            String [] votes = vote.split("");
+            
             try{
-            	 Request request = new Request(pid, secure.encrypt(ballot[pid]));
-            	 secure.decrypt(secure.getKey(), secure.encrypt(ballot[pid]));
-            	 Response response = Call("Vote", request, j);
-            	 // Received encrypted vote as response
-            	 // Store this vote
-            	 ballot[response.getPid()] = response.getVote();
-            	 receivedVotes++;
+            	
+	        	if (voteType == VoteType.MY_TOP){
+	        		
+	        		//Byzantine
+	        		if (pid % 3 == 0) {
+	        			Random r = new Random();
+	        			String voteVal = myVoteRank[r.nextInt(myVoteRank.length)];
+	        			Request request = new Request(pid, secure.encrypt(voteVal));
+	        			Response response = Call("Vote", request, j);
+	        			ballot[response.getPid()] = response.getVote();
+	        		}
+	        		else {
+	        			Request request = new Request(pid, secure.encrypt(votes[0]));
+		        		Response response = Call("Vote", request, j);
+			        	// Received encrypted vote as response
+			        	// Store this vote
+		        		ballot[response.getPid()] = response.getVote();
+	        		}
+	        		
+	        		
+	        	}
+	        	else {
+	        		// Sending top 2 choices to everyone
+	        		// TODO: Make this also encrypted??
+	        		Request request = new Request(pid, votes[0], votes[1]);
+	        		Response response = Call("Vote", request, j);
+	        		
+	        		// Assign value to second choice if second == null and value isn't equal to first
+	        		if (secondBallot == null && !response.getFirstChoice().equals(firstBallot))
+	        			secondBallot = response.getFirstChoice();
+	        		if (secondBallot == null && !response.getSecondChoice().equals(firstBallot))
+	        			secondBallot = response.getSecondChoice();
+	        		
+	        		
+	        		
+	        		// Add both choices to topChoices map
+	        		Integer occur = topChoices.get(response.getFirstChoice());
+	        		topChoices.put(response.getFirstChoice(), occur != null ? occur+1 : 1);
+	        		occur = topChoices.get(response.getSecondChoice());
+	        		topChoices.put(response.getSecondChoice(), occur != null ? occur+1 : 1);
+	        		
+	        		
+	        		
+	        		// If received first choice is better than current first choice, replace it.
+	        		// Put old first choice as 2nd choice
+	        		if (topChoices.get(response.getFirstChoice()) > topFirst
+	        				|| (topChoices.get(response.getFirstChoice()) == topFirst 
+	        					&& firstBallot.compareTo(response.getFirstChoice()) < 0)){
+	        			
+	        			// Move most popular to 2nd most popular
+	        			topSecond = topFirst;
+	        			secondBallot = firstBallot;
+	        			
+	        			topFirst = topChoices.get(response.getFirstChoice());
+	        			firstBallot = response.getFirstChoice();
+	        		}
+	        		// If received first choice is better than current second choice, replace it
+	        		else if (topChoices.get(response.getFirstChoice()) > topSecond
+	        				|| (topChoices.get(response.getFirstChoice()) == topSecond 
+        					&& secondBallot.compareTo(response.getFirstChoice()) < 0)){
+	        			
+	        			topSecond = topChoices.get(response.getFirstChoice());
+	        			secondBallot = response.getFirstChoice();
+	        			
+	        		}
+	        		
+	        		// If received 2nd choice is better than current first choice, replace it.
+	        		// Put old first choice as 2nd choice
+	        		if (topChoices.get(response.getSecondChoice()) > topFirst
+	        				|| (topChoices.get(response.getSecondChoice()) == topFirst 
+	        					&& firstBallot.compareTo(response.getSecondChoice()) < 0)){
+	        			
+	        			// Move most popular to 2nd most popular
+	        			topSecond = topFirst;
+	        			secondBallot = firstBallot;
+	        			
+	        			topFirst = topChoices.get(response.getFirstChoice());
+	        			firstBallot = response.getFirstChoice();
+	        		}
+	        		// If received 2nd is better than current second choice, replace it
+	        		else if (topChoices.get(response.getSecondChoice()) > topSecond
+	        				|| (topChoices.get(response.getSecondChoice()) == topSecond 
+        					&& secondBallot.compareTo(response.getSecondChoice()) < 0)){
+	        			
+	        			topSecond = topChoices.get(response.getSecondChoice());
+	        			secondBallot = response.getSecondChoice();
+	        			
+	        		}
+	        		
+	        	}
+	        	
+	        	receivedVotes.getAndIncrement();
+
+	        		
+	        	
             } catch (Exception e) {
             	e.printStackTrace();
             }
             
         }
         
+        System.out.println("Top Choice " + pid + ": " + firstBallot);
+        System.out.println("Second Choice " + pid + ": " + secondBallot);
+        
         // Wait to receive votes from everyone, inform everyone
         //System.out.println("Waiting to get all votes");
-        while (this.receivedVotes != peers.length - 1) {
+        while (this.receivedVotes.get() == 0 || (this.receivedVotes.get() % (peers.length - 1)) != 0) {
         	try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
@@ -294,15 +433,23 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
     		Call("Done", request, i);
     	}
     
+    	
         
         //System.out.println("Waiting to get Done from all");
-        while (this.receivedDones != peers.length - 1) {
+        while (this.receivedDones.get() == 0 || (this.receivedDones.get() % (peers.length - 1)) != 0) {
         	try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
         }
+        
+        if (voteType == VoteType.TOP_TWO){
+        	// No need for decryption
+        	return;
+        }
+        
+        
         
         // All have received all votes, broadcast keys
         for (int i = 0; i < peers.length; ++i){
@@ -316,7 +463,7 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
         
         // Wait to receive votes from everyone, inform everyone
         //System.out.println("Waiting to get all votes");
-        while (this.receivedKeys != peers.length - 1) {
+        while (this.receivedKeys.get() == 0 ||  (this.receivedKeys.get() % (peers.length - 1)) != 0) {
         	try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
@@ -324,6 +471,7 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 			}
         	
         }
+        
 	}
 	    
 }

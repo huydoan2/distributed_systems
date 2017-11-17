@@ -8,7 +8,7 @@ public class ElectionRunner {
 	public static void main(String[] args) {
 		
 		
-		KYoungScheme [] kys = initOrigKYoung(5);
+		KYoungScheme [] kys = initOrigKYoung(15);
 		for (KYoungScheme k: kys) {
 			//System.out.println("Voter " + k.pid + ": " + k.ballot[k.pid]);
 			k.Start();
@@ -48,7 +48,7 @@ public class ElectionRunner {
 		String host = "127.0.0.1";
         String[] peers = new String[nKYS];
         int[] ports = new int[nKYS];
-        String k = "abc";
+        String k = "abcdef";
         HashSet<String> permutations = (HashSet<String>) KYoungScheme.permutationFinder(k);
         for(int i = 0 ; i < nKYS; i++){
             ports[i] = 1100+i;
