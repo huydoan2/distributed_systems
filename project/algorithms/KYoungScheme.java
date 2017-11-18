@@ -316,7 +316,6 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	
 	
 	private void runByzantine (int ballotNum, String first, String second) {
-		// TODO Auto-generated method stub
 		// Odd number of votes, pick majority
 		int countZero = 0, countOne = 0;
 		for (int i: binaryConsensus){
@@ -493,11 +492,29 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	        		
 	        	}
 	        	else {
+	        		
+	        		// TODO : Check this
+	        		/*if (pid % 3 == 0){
+	        			String vote1 = votes[0], vote2 = votes[1];
+	        			Random r = new Random();
+	        			while (true){
+	        				vote1 = myVoteRank[r.nextInt(myVoteRank.length)];
+	        				vote2 = myVoteRank[r.nextInt(myVoteRank.length)];
+	        				if (!agreedBallot.contains(vote1) && !agreedBallot.contains(vote2))
+	        					break;
+	        			}
+	        			Request request = new Request(pid, vote1, vote2);
+		        		Response response = Call("Vote", request, j);
+		        		updateChoices(response.getFirstChoice(), response.getSecondChoice());
+	        		}*/
+	        		//else {
+	        			Request request = new Request(pid, votes[0], votes[1]);
+		        		Response response = Call("Vote", request, j);
+		        		updateChoices(response.getFirstChoice(), response.getSecondChoice());
+	        		//}
 	        		// Sending top 2 choices to everyone
 	        		// TODO: Make this also encrypted??
-	        		Request request = new Request(pid, votes[0], votes[1]);
-	        		Response response = Call("Vote", request, j);
-	        		updateChoices(response.getFirstChoice(), response.getSecondChoice());
+	        		
 	        	}
 	        	
 	        	receivedVotes.getAndIncrement();
