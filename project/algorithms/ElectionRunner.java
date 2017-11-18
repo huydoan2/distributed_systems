@@ -8,7 +8,7 @@ public class ElectionRunner {
 	public static void main(String[] args) {
 		
 		
-		KYoungScheme [] kys = initOrigKYoung(15);
+		KYoungScheme [] kys = initOrigKYoung(7);
 		for (KYoungScheme k: kys) {
 			//System.out.println("Voter " + k.pid + ": " + k.ballot[k.pid]);
 			k.Start();

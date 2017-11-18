@@ -271,4 +271,10 @@ public class BscAlpha implements  Runnable, BSCRMI{
 		}
 		return null;
 	}
+
+	@Override
+	public Response Choice(Request req) throws RemoteException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

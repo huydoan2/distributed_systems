@@ -190,4 +190,10 @@ public class BscBeta implements Runnable, BSCRMI{
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public Response Choice(Request req) throws RemoteException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
