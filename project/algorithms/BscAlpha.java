@@ -3,7 +3,6 @@
  */
 
 package algorithms;
-import java.nio.ByteBuffer;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -16,7 +15,6 @@ import DE.BSCRMI;
 import DE.Request;
 import DE.Response;
 import DE.SecureTransfer;
-import DE.VoteType;
 
 
 public class BscAlpha implements  Runnable, BSCRMI{

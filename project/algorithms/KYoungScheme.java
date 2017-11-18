@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,7 +44,7 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
     SecureTransfer secure;
     
     int maxScore;
-    String maxRank;
+    String [] maxRank;
 
     // Variables for exchanging votes
     AtomicInteger receivedVotes, receivedKeys, receivedDones, receivedChoices;
@@ -102,6 +101,35 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
         
     }
     
+    int KYoungScore(String[] ranking, String[] ballot){
+    	   int score = 0;
+
+    	   HashMap<String, Integer> mRank = new HashMap<String, Integer>();
+    	   for(int i = 0;i < ballot.length; ++i)
+    	      mRank.put(ballot[i], i);
+
+
+    	   for(int i = 0; i < ranking.length - 1; ++i){
+    	      for(int j = i+1; j < ranking.length; ++j){
+    	         if(mRank.get(ranking[i]) > mRank.get(ranking[j]))
+    	            ++score;
+    	      }
+    	   }
+
+    	   return  score;
+    	}
+    
+    String [] runKemenyYoung(){
+    	for (String ranking: P.toArray(new String[P.size()])){
+    		int score = KYoungScore(ranking.split(""), finalBallot);
+    		if (score > maxScore){
+    			maxScore = score;
+    			maxRank = ranking.split("");
+    		}
+    	}
+		return maxRank;
+    	
+    }
     
     public  static Set<String> permutationFinder(String str) {
         Set<String> perm = new HashSet<String>();
@@ -174,33 +202,13 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	@Override
 	public Response Key(Request req) throws RemoteException {
 		// Print out votes when all received and non decrypted
-				if (this.receivedKeys.get() == 0) {
-					try{
-						KYoungScheme.mutex.lock();
-						/*StringBuilder sb = new StringBuilder();
-						sb.append("[ ");
-						for (String a: ballot){
-							sb.append(a + " ");
-						}
-						sb.append(']');
-						System.out.println("Votes in pid (before decryption): " + pid);
-						System.out.println(sb.toString());
-						System.out.println("");*/
-					} catch (Exception e){
-						
-					}
-					finally {
-						KYoungScheme.mutex.unlock();
-					}
-					
-				}
-				try {
-					this.receivedKeys.getAndIncrement();
-					ballot[req.getPid()] = req.getSecure().decrypt(ballot[req.getPid()]);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				return null;
+		try {
+			this.receivedKeys.getAndIncrement();
+			ballot[req.getPid()] = req.getSecure().decrypt(ballot[req.getPid()]);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	@Override
@@ -237,8 +245,6 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 		
 		//System.out.println("Starting vote exchange");
 		try{
-			/*exchangeVotes(ballot[pid], VoteType.MY_TOP);
-			barrier.await();*/
 			
 			for (int i = 0; i < finalBallot.length; ++i){
 				
@@ -279,6 +285,7 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	 			//System.out.println("Finished top 2 vote exchange");
 	 		}
 			
+			runKemenyYoung();
 			
 			
 		}
@@ -305,11 +312,11 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("[ ");
-		for (String a: finalBallot){
+		for (String a: maxRank){
 			sb.append(a + " ");
 		}
 		sb.append(']');
-		System.out.println("Votes in pid (after decryption): " + pid);
+		System.out.println("Kemeny Young Score Result: " + pid);
 		System.out.println(sb.toString());
 		System.out.println("");
 	}
@@ -494,7 +501,7 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	        	else {
 	        		
 	        		// TODO : Check this
-	        		/*if (pid % 3 == 0){
+	        		if (pid % 3 == 0 && pid != 0){
 	        			String vote1 = votes[0], vote2 = votes[1];
 	        			Random r = new Random();
 	        			while (true){
@@ -506,12 +513,12 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	        			Request request = new Request(pid, vote1, vote2);
 		        		Response response = Call("Vote", request, j);
 		        		updateChoices(response.getFirstChoice(), response.getSecondChoice());
-	        		}*/
-	        		//else {
+	        		}
+	        		else {
 	        			Request request = new Request(pid, votes[0], votes[1]);
 		        		Response response = Call("Vote", request, j);
 		        		updateChoices(response.getFirstChoice(), response.getSecondChoice());
-	        		//}
+	        		}
 	        		// Sending top 2 choices to everyone
 	        		// TODO: Make this also encrypted??
 	        		
