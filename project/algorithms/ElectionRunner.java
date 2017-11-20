@@ -8,47 +8,29 @@ public class ElectionRunner {
 	public static void main(String[] args) {
 		
 		
-		KYoungScheme [] kys = initOrigKYoung(7);
+		KYoungScheme [] kys = initOrigKYoung(7, 2);
 		for (KYoungScheme k: kys) {
 			//System.out.println("Voter " + k.pid + ": " + k.ballot[k.pid]);
 			k.Start();
 		}
 		
-		
-		/*BscAlpha nodes [] = initBSCAlgoOne(7);
-		Thread threadHandlers [] = new Thread[7];
-		for (int i = 0; i < nodes.length; ++i){
-			
-			threadHandlers[i] = new Thread(nodes[i]);
-			threadHandlers[i].start();
-			
+		// TODO: Implement pruned scheme
+		//kys = initPrunedKYoung(7, 2);
+		for (KYoungScheme k: kys) {
+			//System.out.println("Voter " + k.pid + ": " + k.ballot[k.pid]);
+			//k.Start();
 		}
-		
-		
-		for (int i = 0; i < threadHandlers.length; i++){
-			try {
-				threadHandlers[i].join();
-				System.out.println("Votes in " + i + ":");
-				System.out.print("[");
-				for (String j: nodes[i].T){
-					System.out.print(String.valueOf(j) + " ");
-				}
-				System.out.println();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}*/
+
       
     }
 	
-	public static KYoungScheme[] initOrigKYoung(int nKYS){
+	private static KYoungScheme[] initPrunedKYoung(int nKYS, int faulty) {
 		KYoungScheme [] kys = new KYoungScheme[nKYS];
 		
 		String host = "127.0.0.1";
         String[] peers = new String[nKYS];
         int[] ports = new int[nKYS];
-        String k = "abcdef";
+        String k = "abc";
         HashSet<String> permutations = (HashSet<String>) KYoungScheme.permutationFinder(k);
         for(int i = 0 ; i < nKYS; i++){
             ports[i] = 1100+i;
@@ -59,7 +41,46 @@ public class ElectionRunner {
         Random r = new Random();
         String [] possible_choices = permutations.toArray(new String[permutations.size()]);
         for(int i = 0; i < nKYS; i++){
-        	kys[i] = new OrigKYoung(i, peers, ports, possible_choices[Math.abs(r.nextInt()) % possible_choices.length], 1);
+        	/*if (i == 0 || i == 1 || i == 2){
+        		kys[i] = new PrunedKYoung(i, peers, ports, "bac", faulty);
+        	}
+        	else if (i == 4)
+        		kys[i] = new PrunedKYoung(i, peers, ports, "cba", faulty);
+        	else
+        		kys[i] = new PrunedKYoung(i, peers, ports, "cab", faulty);*/
+        	kys[i] = new PrunedKYoung(i, peers, ports, possible_choices[Math.abs(r.nextInt()) % possible_choices.length], faulty);
+        }
+		
+		
+		return kys;
+	}
+
+	public static KYoungScheme[] initOrigKYoung(int nKYS, int faulty){
+		KYoungScheme [] kys = new KYoungScheme[nKYS];
+		
+		String host = "127.0.0.1";
+        String[] peers = new String[nKYS];
+        int[] ports = new int[nKYS];
+        String k = "abc";
+        HashSet<String> permutations = (HashSet<String>) KYoungScheme.permutationFinder(k);
+        for(int i = 0 ; i < nKYS; i++){
+            ports[i] = 1100+i;
+            peers[i] = host;
+        }
+        
+        
+        Random r = new Random();
+        String [] possible_choices = permutations.toArray(new String[permutations.size()]);
+        for(int i = 0; i < nKYS; i++){
+/*        	if (i == 0 || i == 1 || i == 2){
+        		kys[i] = new OrigKYoung(i, peers, ports, "bac", faulty);
+        	}
+        	else if (i == 4)
+        		kys[i] = new OrigKYoung(i, peers, ports, "cba", faulty);
+        	else
+        		kys[i] = new OrigKYoung(i, peers, ports, "cab", faulty);*/
+        	
+        	kys[i] = new OrigKYoung(i, peers, ports, possible_choices[Math.abs(r.nextInt()) % possible_choices.length], faulty);
         }
 		
 		

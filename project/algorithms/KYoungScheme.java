@@ -39,7 +39,7 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	String [] finalBallot;
 	String [] myVoteRank;
     int pid;               // me
-    int faults;
+    int faulty;
     Random randomGenerator;
     SecureTransfer secure;
     
@@ -52,11 +52,14 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
     
     static ReentrantLock mutex = new ReentrantLock();
     
-    public KYoungScheme(int pid, String[] peers, int[] ports, String k, int faults){
+    abstract void scheme();
+    
+    
+    public KYoungScheme(int pid, String[] peers, int[] ports, String k, int faulty){
         this.pid = pid;
         this.peers = peers;
         this.ports = ports;
-        this.faults = faults;
+        this.faulty = faulty;
         if (barrier == null || barrier.getParties() != peers.length)
         	barrier = new CyclicBarrier(peers.length);
         
@@ -71,7 +74,6 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
         
         
         // Values in agreedBallot are not considered for topChoices
-        // TODO
         agreedBallot = new HashSet<String>();
         
         // Contains my vote ranking
@@ -119,17 +121,7 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
     	   return  score;
     	}
     
-    String [] runKemenyYoung(){
-    	for (String ranking: P.toArray(new String[P.size()])){
-    		int score = KYoungScore(ranking.split(""), finalBallot);
-    		if (score > maxScore){
-    			maxScore = score;
-    			maxRank = ranking.split("");
-    		}
-    	}
-		return maxRank;
-    	
-    }
+    
     
     public  static Set<String> permutationFinder(String str) {
         Set<String> perm = new HashSet<String>();
@@ -235,15 +227,8 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
     
 	@Override
 	public void run() {
-		/*
-		After exchanging their votes using the secret voting mechanism (briefly discussed in Section
-				7), the processes participate in O(f) rounds of agreement to ensure that all the good processes agree on the
-				same ballot. If the agreement protocol takes m rounds, then the overall message complexity is O(mn3
-				).
-				
-		*/
 		
-		//System.out.println("Starting vote exchange");
+		// Agreeing on final Ballot
 		try{
 			
 			for (int i = 0; i < finalBallot.length; ++i){
@@ -285,7 +270,7 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	 			//System.out.println("Finished top 2 vote exchange");
 	 		}
 			
-			runKemenyYoung();
+			
 			
 			
 		}
@@ -294,20 +279,8 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 		}
  		
  		
-		//System.out.println("Votes exchanged securely");
-		
-		
-		// O(f) rounds of agreement to make sure all correct processes agree on the same ballot
-		
-		//System.out.println("Starting top 2 vote exchange");
-		
-		/*for (int i = 0; i < ballot.length - 1; ++i){
-			exchangeVotes(topTwoVotes, VoteType.TOP_TWO);
-		}*/
- 		
- 		
- 		
-		
+		// Scheme implemented in derived classes
+		scheme();
 		
 		
 		StringBuilder sb = new StringBuilder();
@@ -341,7 +314,6 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 		}
 		
 		
-		//broadcastAndWaitForDones();
 	}
 
 
@@ -452,7 +424,6 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 		
 		String firstBallot = vote.split("")[0], secondBallot = null;
 		if (voteType == VoteType.TOP_TWO){
-			//TODO: Make sure this is correct
 			secondBallot = vote.split("")[1];
 			mutex.lock();
 			Integer occur = topChoices.get(firstBallot);
@@ -500,7 +471,6 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 	        	}
 	        	else {
 	        		
-	        		// TODO : Check this
 	        		if (pid % 3 == 0 && pid != 0){
 	        			String vote1 = votes[0], vote2 = votes[1];
 	        			Random r = new Random();
@@ -519,8 +489,6 @@ public abstract class KYoungScheme implements Runnable, BSCRMI{
 		        		Response response = Call("Vote", request, j);
 		        		updateChoices(response.getFirstChoice(), response.getSecondChoice());
 	        		}
-	        		// Sending top 2 choices to everyone
-	        		// TODO: Make this also encrypted??
 	        		
 	        	}
 	        	
