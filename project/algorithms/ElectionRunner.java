@@ -43,36 +43,6 @@ public class ElectionRunner {
       
     }
 	
-	private static BSW[] initPrunedKYoung(int nKYS, int faulty) {
-		BSW [] kys = new BSW[nKYS];
-		
-		String host = "127.0.0.1";
-        String[] peers = new String[nKYS];
-        int[] ports = new int[nKYS];
-        String k = "abc";
-        HashSet<String> permutations = (HashSet<String>) ElectionUtils.permutationFinder(k);
-        for(int i = 0 ; i < nKYS; i++){
-            ports[i] = 1100+i;
-            peers[i] = host;
-        }
-        
-        
-        //Random r = new Random();
-        //String [] possible_choices = permutations.toArray(new String[permutations.size()]);
-        for(int i = 0; i < nKYS; i++){
-        	if (i == 0 || i == 1 || i == 2){
-        		kys[i] = new PrunedKYoung(i, peers, ports, "bac", faulty);
-        	}
-        	else if (i == 6)
-        		kys[i] = new PrunedKYoung(i, peers, ports, "abc", faulty);
-        	else
-        		kys[i] = new PrunedKYoung(i, peers, ports, "cab", faulty);
-        	//kys[i] = new PrunedKYoung(i, peers, ports, possible_choices[Math.abs(r.nextInt()) % possible_choices.length], faulty);
-        }
-		
-		
-		return kys;
-	}
 
 	public static BSW[] initOrigKYoung(int nKYS, int faulty){
 		BSW [] kys = new BSW[nKYS];
