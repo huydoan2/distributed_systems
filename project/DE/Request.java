@@ -1,6 +1,9 @@
 package DE;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Request implements Serializable {
 	static final long serialVersionUID=1L;
@@ -10,8 +13,10 @@ public class Request implements Serializable {
 	private boolean doneReq;
 	private byte[] secretKey;
 	private SecureTransfer secure;
-	private VoteType voteType = VoteType.MY_TOP;
+	private VoteType voteType = VoteType.MY_VOTE;
 	private String firstChoice, secondChoice;
+	private String [] ballot;
+	private HashMap<Integer, List<String>> topChoices;
 	
 	public Request(int pid, String voteValue){
 		this.pid = pid;
@@ -39,6 +44,28 @@ public class Request implements Serializable {
 		voteType = VoteType.TOP_TWO;
 		this.firstChoice = firstChoice;
 		this.secondChoice = secondChoice;
+	}
+	
+	/*public Request(int pid, ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> topChoices) {
+		voteType = VoteType.TOP_TWO;
+		this.pid = pid;
+		this.topChoices = topChoices;
+	}*/
+	
+
+	public Request(int pid, String[] ballot) {
+		this.pid = pid;
+		this.ballot = ballot;
+	}
+
+	public Request(int pid, HashMap<Integer, List<String>> topTwoVotes) {
+		this.pid = pid;
+		this.topChoices = topTwoVotes;
+		this.voteType = VoteType.TOP_TWO;
+	}
+	
+	public HashMap<Integer, List<String>> getTopTwoVotes(){
+		return this.topChoices;
 	}
 
 	public int getPid(){
@@ -71,5 +98,9 @@ public class Request implements Serializable {
 	
 	public VoteType getVoteType(){
 		return voteType;
+	}
+	
+	public String [] getBallot(){
+		return ballot;
 	}
 }

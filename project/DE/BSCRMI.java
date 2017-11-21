@@ -15,6 +15,7 @@ public interface BSCRMI extends Remote{
     Response Done(Request req) throws RemoteException;
     Response Key(Request req) throws RemoteException;
 	Response Choice(Request req) throws RemoteException;
+	Response Ballot(Request req) throws RemoteException;
     
 
 }

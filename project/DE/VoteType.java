@@ -1,6 +1,6 @@
 package DE;
 
 public enum VoteType {
-	MY_TOP,
+	MY_VOTE,
 	TOP_TWO
 }

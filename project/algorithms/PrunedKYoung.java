@@ -1,53 +1,79 @@
 package algorithms;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 
-import util.MapUtil;
-
-public class PrunedKYoung extends KYoungScheme{
+public class PrunedKYoung extends BSW{
 
 	public PrunedKYoung(int pid, String[] peers, int[] ports, String k, int faults) {
-		super(pid, peers, ports, k, faults);
+		super(pid, peers, ports, k, faults, new BSWScheme(){
+
+			@Override
+			public String runAlgoritm(String[] ballot, int faulty) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+			
+		});
 
 	}
 	
-	int KYoungScore(String[] ranking, String[] ballot){
-	 	   int score = 0;
-
-	 	   HashMap<String, Integer> mRank = new HashMap<String, Integer>();
-	 	   for(int i = 0;i < ballot.length; ++i)
-	 	      mRank.put(ballot[i], i);
-
-
-	 	   for(int i = 0; i < ranking.length - 1; ++i){
-	 	      for(int j = i+1; j < ranking.length; ++j){
-	 	         if(mRank.get(ranking[i]) > mRank.get(ranking[j]))
-	 	            ++score;
-	 	      }
+	/*int KYoungScore(String[] ranking, String[] ballot){
+		int score = 0;
+	 	  HashMap<String, Integer> mRank;
+	 	   for(int i = 0;i < ballot.length; ++i){
+	 		   
+	 		   mRank = new HashMap<String, Integer>();
+	 		   String [] bal = ballot[i].split("");
+	 		   for (int j = 0; j < bal.length; ++j){
+	 			  mRank.put(bal[j], j);
+	 		   }
+	 		   
+	 		  for(int x = 0; x < ranking.length - 1; ++x){
+	 	 	      for(int y = x+1; y < ranking.length; ++y){
+	 	 	         if(mRank.get(ranking[x]) < mRank.get(ranking[y]))
+	 	 	            ++score;
+	 	 	      }
+	 	 	   } 
 	 	   }
 
-	 	   return  score;
-	 	}
 
-		// TODO: Fix this
-		HashSet<String> prunedBallot(){
-			Map<String, Integer> F = new HashMap<String, Integer>();
+	 	   return  score;
+	 	}*/
+
+		List<String> prunedBallot(String ranking){
+			List<VoteScore> scoreList = new ArrayList<VoteScore>();
 			
-			for (String ranking: P.toArray(new String[P.size()])){
-				F.put(ranking, KYoungScore(ranking.split(""), finalBallot));
+			for (String vote: finalBallot){
+				scoreList.add(new VoteScore(vote, BSWAlgos.KYoungScore(ranking.split(""), new String[] {vote})));		
 			}
-			F =  MapUtil.sortByValue(F);
-			
-			return P;
+			VoteScore [] resArray = scoreList.toArray(new VoteScore[scoreList.size()]);					
+			Arrays.sort(resArray, Collections.reverseOrder());
+			int i = 0;
+			List<String> resultArray = new ArrayList<String>();
+			for (VoteScore s: resArray){
+				
+				resultArray.add(s.vote);
+				i++;
+				if (i == (finalBallot.length - this.faulty))
+					break;
+			}
+				
+			return resultArray;
 			
 		}
 		void runPrunedKemenyYoung(){
-			maxScore = 0;
+			int score = 0;
+			
 			maxRank = null;
 	    	for (String ranking: P.toArray(new String[P.size()])){
-	    		int score = KYoungScore(ranking.split(""), finalBallot);
+	    		score = 0;
+	    		List<String> prunedBallot = prunedBallot(ranking);
+	    		score += BSWAlgos.KYoungScore(ranking.split(""), prunedBallot.toArray(new String[prunedBallot.size()]));
+	    		
 	    		if (score > maxScore){
 	    			maxScore = score;
 	    			maxRank = ranking.split("");
@@ -56,9 +82,30 @@ public class PrunedKYoung extends KYoungScheme{
 	    	
 	    }
 
-	@Override
+	/*@Override
 	void scheme() {
+		//maxRank = BSWAlgos.placePlurality(finalBallot).split("");
+		//BSWAlgos.pairwiseComparison(finalBallot);
+		//BSWAlgos.bordaCount(finalBallot);
 		runPrunedKemenyYoung();
-	}
+	}*/
+	
 
+}
+
+class VoteScore implements Comparable<VoteScore>{
+	int score;
+	String vote;
+	public VoteScore(String vote, int score){
+		this.score = score;
+		this.vote = vote;
+	}
+	
+
+	@Override
+	public int compareTo(VoteScore other) {
+		if (other.score != this.score)
+			return Integer.compare(this.score, other.score);
+		return vote.compareTo(other.vote);
+	}
 }
