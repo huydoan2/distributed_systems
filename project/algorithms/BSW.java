@@ -224,6 +224,7 @@ public class BSW implements Runnable, BSCRMI{
     public void Start(){
         // Your code here
         try{
+        	maxRank = null;
             runner = new Thread(this);
             runner.start();
         } catch (Exception e) {
