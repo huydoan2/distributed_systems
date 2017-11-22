@@ -35,6 +35,8 @@ public class PrunedKemenyYoung implements BSWScheme {
 		List<VoteScore> scoreList = new ArrayList<VoteScore>();
 		
 		for (String vote: ballot){
+			if (vote == null)
+				System.out.println("FOUND NULL BALLOT");
 			scoreList.add(new VoteScore(vote, KYoungScore(ranking.split(""), new String[] {vote})));		
 		}
 		VoteScore [] resArray = scoreList.toArray(new VoteScore[scoreList.size()]);					

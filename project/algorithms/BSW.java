@@ -75,9 +75,9 @@ public class BSW implements Runnable, BSCRMI{
 			        throws IOException
 			    {
 			        Socket socket = new Socket();
-			        socket.setSoTimeout( 1000 );
+			        socket.setSoTimeout(3000);
 			        socket.setSoLinger( false, 0 );
-			        socket.connect( new InetSocketAddress( host, port ), 1000 );
+			        socket.connect( new InetSocketAddress( host, port ), 3000);
 			        return socket;
 			    }
 
@@ -232,19 +232,47 @@ public class BSW implements Runnable, BSCRMI{
         }
     }
     
+    public void cleanUp(){
+    	// Will contain top preference of all voters
+        //ballot = new String [peers.length];
+        // Store your own preference
+        
+        finalBallot = new String [peers.length];
+        ballotCounter = new ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>>();
+        for (int i = 0; i < peers.length; ++i)
+        	ballotCounter.put(i, new ConcurrentHashMap<>());
+        
+       
+        topChoices = new ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>>();
+        
+        maxScore = 0;
+        maxRank = null;
+        receivedVotes = new AtomicInteger(0);
+		receivedKeys = new AtomicInteger(0);
+		receivedDones = new AtomicInteger(0);
+		receivedChoices = new AtomicInteger(0);
+		receivedBallots = new AtomicInteger(0);
+        secure = new SecureTransfer();
+    }
     
 	@Override
 	public void run() {
 		
 		// Agreeing on final Ballot
 		try{
-				
-			exchangeVotes();
-			//barrier.await();
-			exchangeBallots();
-			//barrier.await();
+			boolean ballotComplete = true;
+			for (String s: ballot)
+				if (s == null)
+					ballotComplete = false;
+			if (!ballotComplete){
+				cleanUp();
+				barrier.await();
+				exchangeVotes();
+				exchangeBallots();
+					
+			}
 			
- 			HashMap<Integer, List<String>> topTwoVotes = TopTwoVotes();
+ 			/*HashMap<Integer, List<String>> topTwoVotes = TopTwoVotes();
  	 		
  	 		if (ballotNotFinal())
  	 			exchangeTopChoices(topTwoVotes);
@@ -255,10 +283,12 @@ public class BSW implements Runnable, BSCRMI{
  	 				finalBallot[i] = topChoice;
  	 			}
  	 				
- 	 		}
+ 	 		}*/
+ 	 		
+ 	 		
+ 	 		
  			barrier.await();
- 			
-	 			
+
 		}
 		catch (Exception e){
 			e.printStackTrace();
@@ -267,9 +297,9 @@ public class BSW implements Runnable, BSCRMI{
  		
 		// Scheme implemented in derived classes
 		//scheme();
-		maxRank = bswScheme.runAlgoritm(finalBallot, faulty).split("");
+		maxRank = bswScheme.runAlgoritm(ballot, faulty).split("");
 		
-		StringBuilder sb = new StringBuilder();
+		/*StringBuilder sb = new StringBuilder();
 		sb.append("[ ");
 		for (String a: maxRank){
 			sb.append(a + " ");
@@ -277,7 +307,7 @@ public class BSW implements Runnable, BSCRMI{
 		sb.append(']');
 		System.out.println("Kemeny Young Score Result: " + pid);
 		System.out.println(sb.toString());
-		System.out.println("");
+		System.out.println("");*/
 	}
 	
 	
@@ -408,6 +438,7 @@ public class BSW implements Runnable, BSCRMI{
 		for (int i = 0; i < finalBallot.length; ++i){
 			// Only do for ballots which aren't agreed upon
 			if (finalBallot[i] == null){
+				System.out.println("FOUND NULL BALLOT");
 				List<String> res = new ArrayList<String>();
 				int firstCount = 0, secondCount = 0;
 				String firstStr = null, secondStr = null;
@@ -525,8 +556,10 @@ public class BSW implements Runnable, BSCRMI{
 		        	// Received encrypted vote as response
 		        	// Store this vote
 	        		
-	        		if (response == null)
+	        		if (response == null){
 	        			ballot[j] = null;
+	        			System.out.println("FOUND NULL BALLOT");
+	        		}
 	        		else
 	        			ballot[response.getPid()] = response.getVote();
     //    		}

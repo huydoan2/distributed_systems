@@ -14,6 +14,8 @@ public class BordaCount implements BSWScheme {
 		ArrayList<VoteScore> ranking = new ArrayList<VoteScore>();
 		HashMap<String, Integer> scores = new HashMap<>();
 		for (String s: ballot){
+			if (s == null)
+				continue;
 			for (int i = 0; i < s.length(); ++i){
 				Integer occur = scores.get(s.substring(i, i+1));
 				scores.put(s.substring(i, i+1), occur != null ? occur + i : i);
