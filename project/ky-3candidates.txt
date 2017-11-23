@@ -1,0 +1,89 @@
+==========================================================
+Running KY
+KY [acb]: 2
+KY [cba]: 33
+KY [cab]: 15
+Good Probability: 0.55
+Candidates: 3
+Total Score: 131
+Avg Distance Overall: 2.62
+Avg Distance Bad: 2.62
+==========================================================
+==========================================================
+Running KY
+KY [acb]: 9
+KY [bca]: 1
+KY [cba]: 30
+KY [cab]: 9
+KY [bac]: 1
+Good Probability: 0.6000000000000001
+Candidates: 3
+Total Score: 120
+Avg Distance Overall: 2.4
+Avg Distance Bad: 2.4
+==========================================================
+==========================================================
+Running KY
+KY [acb]: 28
+KY [bca]: 2
+KY [cba]: 6
+KY [abc]: 2
+KY [cab]: 12
+Good Probability: 0.6500000000000001
+Candidates: 3
+Total Score: 74
+Avg Distance Overall: 1.48
+Avg Distance Bad: 1.5416666666666667
+==========================================================
+==========================================================
+Running KY
+KY [acb]: 26
+KY [abc]: 18
+KY [bac]: 3
+KY [cab]: 3
+Good Probability: 0.7000000000000002
+Candidates: 3
+Total Score: 35
+Avg Distance Overall: 0.7
+Avg Distance Bad: 1.09375
+==========================================================
+==========================================================
+Running KY
+KY [acb]: 19
+KY [abc]: 30
+KY [cab]: 1
+Good Probability: 0.7500000000000002
+Candidates: 3
+Total Score: 21
+Avg Distance Overall: 0.42
+Avg Distance Bad: 1.05
+==========================================================
+==========================================================
+Running KY
+KY [acb]: 9
+KY [abc]: 41
+Good Probability: 0.8000000000000003
+Candidates: 3
+Total Score: 9
+Avg Distance Overall: 0.18
+Avg Distance Bad: 1.0
+==========================================================
+==========================================================
+Running KY
+KY [acb]: 1
+KY [abc]: 49
+Good Probability: 0.85
+Candidates: 3
+Total Score: 1
+Avg Distance Overall: 0.02
+Avg Distance Bad: 1.0
+==========================================================
+==========================================================
+Running KY
+KY [abc]: 50
+Good Probability: 0.9
+Candidates: 3
+Total Score: 0
+Avg Distance Overall: 0.0
+Avg Distance Bad: NaN
+==========================================================

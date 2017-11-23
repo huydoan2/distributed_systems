@@ -132,11 +132,20 @@ public class BSW implements Runnable, BSCRMI{
             System.setProperty("java.rmi.server.hostname", this.peers[this.pid]);
 
            	registry = LocateRegistry.createRegistry(this.ports[this.pid]);
-            
+           
             stub = (BSCRMI) UnicastRemoteObject.exportObject(this, this.ports[this.pid]);
             registry.rebind("BSC", stub);
         } catch(Exception e){
-            e.printStackTrace();
+        	try {
+				registry = LocateRegistry.getRegistry(this.ports[this.pid]);
+				stub = (BSCRMI) UnicastRemoteObject.exportObject(this, this.ports[this.pid]);
+	            registry.rebind("BSC", stub);
+			} catch (RemoteException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+        	
+            //e.printStackTrace();
         }
         
         
@@ -225,7 +234,8 @@ public class BSW implements Runnable, BSCRMI{
         // Your code here
         try{
         	maxRank = null;
-            runner = new Thread(this);
+        	if (runner == null)
+        		runner = new Thread(this);
             runner.start();
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -298,7 +308,8 @@ public class BSW implements Runnable, BSCRMI{
  		
 		// Scheme implemented in derived classes
 		//scheme();
-		maxRank = bswScheme.runAlgoritm(ballot, faulty).split("");
+		if (pid == 0)
+			maxRank = bswScheme.runAlgoritm(ballot, faulty).split("");
 		
 		/*StringBuilder sb = new StringBuilder();
 		sb.append("[ ");
@@ -347,6 +358,13 @@ public class BSW implements Runnable, BSCRMI{
 		while (receivedBallots.get() != (peers.length - 1)){
 			try {
 				Thread.sleep(1000);
+				boolean done = true;
+				for (String s: ballot){
+					if (s == null)
+						done = false;
+				}
+				if (done)
+					break;
 			} catch (InterruptedException e) {
 				
 				e.printStackTrace();
@@ -574,7 +592,7 @@ public class BSW implements Runnable, BSCRMI{
         }
         // Wait to receive votes from everyone, inform everyone
         //System.out.println("Waiting to get all votes");
-        waitForVotes();
+        //waitForVotes();
     	// Wait for everyone to send done
     	broadcastAndWaitForDones();     
     	// No need for decryption    
