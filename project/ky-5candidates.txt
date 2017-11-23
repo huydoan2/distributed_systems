@@ -1,0 +1,170 @@
+==========================================================
+Running KY
+KY [acebd]: 1
+KY [cebad]: 1
+KY [adecb]: 1
+KY [aecbd]: 2
+KY [baedc]: 2
+KY [aedcb]: 6
+KY [ecbad]: 6
+KY [acbed]: 1
+KY [eadcb]: 2
+KY [edcba]: 1
+KY [ebadc]: 6
+KY [cbaed]: 1
+KY [caedb]: 2
+KY [dbcae]: 1
+KY [beadc]: 2
+KY [caebd]: 1
+KY [dbace]: 1
+KY [bdaec]: 1
+KY [baced]: 1
+KY [eacbd]: 1
+KY [baecd]: 1
+KY [eadbc]: 1
+KY [becad]: 1
+KY [adceb]: 1
+KY [ebdca]: 1
+KY [ebacd]: 2
+KY [aecdb]: 1
+KY [aebdc]: 2
+Good Probability: 0.55
+Candidates: 5
+Total Score: 267
+Avg Distance Overall: 5.34
+Avg Distance Bad: 5.34
+==========================================================
+==========================================================
+Running KY
+KY [abecd]: 6
+KY [abdce]: 1
+KY [cabed]: 1
+KY [acbde]: 1
+KY [abced]: 2
+KY [aecbd]: 4
+KY [aedbc]: 2
+KY [beacd]: 1
+KY [bcaed]: 1
+KY [baedc]: 2
+KY [aebcd]: 3
+KY [aedcb]: 1
+KY [acbed]: 1
+KY [eabcd]: 1
+KY [edcba]: 3
+KY [cbaed]: 1
+KY [caedb]: 1
+KY [cabde]: 1
+KY [abedc]: 5
+KY [becda]: 1
+KY [badec]: 1
+KY [baecd]: 3
+KY [adceb]: 1
+KY [aebdc]: 5
+KY [ecadb]: 1
+Good Probability: 0.6000000000000001
+Candidates: 5
+Total Score: 186
+Avg Distance Overall: 3.72
+Avg Distance Bad: 3.72
+==========================================================
+==========================================================
+Running KY
+KY [abecd]: 5
+KY [abdce]: 3
+KY [acedb]: 1
+KY [acbde]: 1
+KY [abced]: 9
+KY [caedb]: 1
+KY [cabde]: 1
+KY [abdec]: 2
+KY [adcbe]: 2
+KY [abedc]: 4
+KY [aecbd]: 1
+KY [bcaed]: 1
+KY [baced]: 4
+KY [eacbd]: 2
+KY [baecd]: 2
+KY [badce]: 1
+KY [baedc]: 2
+KY [bacde]: 1
+KY [adceb]: 1
+KY [acbed]: 4
+KY [aebdc]: 1
+KY [eabcd]: 1
+Good Probability: 0.6500000000000001
+Candidates: 5
+Total Score: 118
+Avg Distance Overall: 2.36
+Avg Distance Bad: 2.36
+==========================================================
+==========================================================
+Running KY
+KY [abdce]: 5
+KY [abecd]: 1
+KY [acbde]: 5
+KY [abced]: 15
+KY [abdec]: 2
+KY [abcde]: 6
+KY [abedc]: 2
+KY [dbaec]: 1
+KY [baced]: 3
+KY [baecd]: 2
+KY [bacde]: 3
+KY [aebcd]: 2
+KY [acbed]: 3
+Good Probability: 0.7000000000000002
+Candidates: 5
+Total Score: 69
+Avg Distance Overall: 1.38
+Avg Distance Bad: 1.5681818181818181
+==========================================================
+==========================================================
+Running KY
+KY [acdbe]: 1
+KY [abdce]: 4
+KY [abecd]: 3
+KY [baced]: 2
+KY [acbde]: 1
+KY [abced]: 16
+KY [abcde]: 17
+KY [bacde]: 5
+KY [abedc]: 1
+Good Probability: 0.7500000000000002
+Candidates: 5
+Total Score: 41
+Avg Distance Overall: 0.82
+Avg Distance Bad: 1.2424242424242424
+==========================================================
+==========================================================
+Running KY
+KY [abdce]: 2
+KY [abced]: 8
+KY [abcde]: 39
+KY [bacde]: 1
+Good Probability: 0.8000000000000003
+Candidates: 5
+Total Score: 11
+Avg Distance Overall: 0.22
+Avg Distance Bad: 1.0
+==========================================================
+==========================================================
+Running KY
+KY [abdce]: 1
+KY [abced]: 6
+KY [abcde]: 43
+Good Probability: 0.8500000000000003
+Candidates: 5
+Total Score: 7
+Avg Distance Overall: 0.14
+Avg Distance Bad: 1.0
+==========================================================
+==========================================================
+Running KY
+KY [abced]: 1
+KY [abcde]: 49
+Good Probability: 0.9000000000000004
+Candidates: 5
+Total Score: 1
+Avg Distance Overall: 0.02
+Avg Distance Bad: 1.0
+==========================================================
