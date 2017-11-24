@@ -12,7 +12,6 @@ public class ElectionRunner {
 
 	static void runScheme(String schemeName, String ideal, double goodProb){
 		
-		
 		HashMap<String, Integer> ballotResultCount = new HashMap<>();
 		HashSet<String> ballotResult = new HashSet<String>();
 		System.out.println("==========================================================");
@@ -52,20 +51,14 @@ public class ElectionRunner {
 		}
 		int score  = 0;
 		for (String s: ballotResultCount.keySet()){
-			System.out.println(schemeName + " [" + s + "]: " + ballotResultCount.get(s));
 			score += (ballotResultCount.get(s) * distance(ideal, s));
 		}
+		System.out.println(schemeName + "," + goodProb + "," + (score / (50.0)) + "," + ideal.length());
 		System.out.println("Good Probability: " + goodProb);
 		System.out.println("Candidates: " + ideal.length());
 		System.out.println("Total Score: " + score);
 		System.out.println("Avg Distance Overall: " + (score / 50.0));
-		if (ballotResultCount.get(ideal) != null)
-			System.out.println("Avg Distance Bad: " + (score / (50.0 - ballotResultCount.get(ideal))));
-		else
-			System.out.println("Avg Distance Bad: " + (score / 50.0));
 		
-		
-		System.out.println("==========================================================");
 	}
 	
 	
@@ -75,285 +68,20 @@ public class ElectionRunner {
 	
 	public static void main(String[] args) {
 		
-		String schemes [] = {"KY"/*, "PKY", "PW", "BC", "PP"*/};
-		String ideals  [] = {/*"abc", "abcd", */"abcde"/*, "abcdef", "abcdefg", "abcdefgh"*/};
+		String schemes [] = {"KY", "PKY", "PW", "BC", "PP"};
+		String ideals  [] = {"abc"};
 		for (String scheme: schemes){
 			for (String ideal: ideals){
+				//Slowed to check for faults
 				for (double goodProb = 0.55; goodProb < 0.95; goodProb += 0.05){
+					final long startTime = System.currentTimeMillis();
 					runScheme(scheme, ideal, goodProb);
+					final long endTime = System.currentTimeMillis();
+					System.out.println("Total execution time: " + (endTime - startTime) );
 				}				
 			}
 		}
-		
-		
-		/*
-		HashMap<String, Integer> ballotResultCount = new HashMap<>();
-		HashSet<String> ballotResult = new HashSet<String>();
-		System.out.println("Running Kemeny Young Scheme");
-		for (int i = 0; i < 50; ++i){
-			BSW [] kys = initIdealVoters(100, "abc", 33, 0.55, 0.9);
-			
-			
-			for (BSW k: kys) {
-				k.Start();
-			}
-			for (BSW k: kys) {
-				try {
-					k.runner.join();
-					ballotResult.add(String.join("", k.maxRank));
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			for (String s: ballotResult.toArray(new String[ballotResult.size()])){
-				Integer count = ballotResultCount.get(s);
-				ballotResultCount.put(s, count != null ? count+1 : 1);
-			}
-			ballotResult.clear();
-		}
-		int score  = 0;
-		for (String s: ballotResultCount.keySet()){
-			System.out.println("Kemeny Young Scheme [" + s + "]: " + ballotResultCount.get(s));
-			score += (ballotResultCount.get(s) * distance("abc", s));
-		}
-		System.out.println("Total Score: " + score);
-		System.out.println("Avg Distance Overall: " + (score / 50.0));
-		System.out.println("Avg Distance Bad: " + (score / (50.0 - ballotResultCount.get("abc"))));
-		ballotResultCount.clear();
-		
-		
-		
-		System.out.println("Running Pruned Kemeny Young Scheme");
-		for (int i = 0; i < 50; ++i){
-			BSW [] kys = initIdealVoters(100, "abc", 33, 0.55, 0.9);
-			
-			
-			for (BSW k: kys) {
-				k.bswScheme = new PrunedKemenyYoung();
-				k.Start();
-			}
-			for (BSW k: kys) {
-				try {
-					k.runner.join();
-					ballotResult.add(String.join("", k.maxRank));
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			for (String s: ballotResult.toArray(new String[ballotResult.size()])){
-				Integer count = ballotResultCount.get(s);
-				ballotResultCount.put(s, count != null ? count+1 : 1);
-			}
-			ballotResult.clear();
-		}
-		score  = 0;
-		for (String s: ballotResultCount.keySet()){
-			System.out.println("Pruned Kemeny Young Scheme [" + s + "]: " + ballotResultCount.get(s));
-			score += (ballotResultCount.get(s) * distance("abc", s));
-		}
-		System.out.println("Total Score: " + score);
-		System.out.println("Avg Distance Overall: " + (score / 50.0));
-		System.out.println("Avg Distance Bad: " + (score / (50.0 - ballotResultCount.get("abc"))));
-		ballotResultCount.clear();
-		
-		
-		
-		
-		System.out.println("Running Pairwise Comparison Scheme");
-		for (int i = 0; i < 50; ++i){
-			BSW [] kys = initIdealVoters(100, "abc", 33, 0.55, 0.9);
-			
-			
-			for (BSW k: kys) {
-				k.bswScheme = new PairwiseComparison();
-				k.Start();
-			}
-			for (BSW k: kys) {
-				try {
-					k.runner.join();
-					ballotResult.add(String.join("", k.maxRank));
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			for (String s: ballotResult.toArray(new String[ballotResult.size()])){
-				Integer count = ballotResultCount.get(s);
-				ballotResultCount.put(s, count != null ? count+1 : 1);
-			}
-			ballotResult.clear();
-		}
-		score  = 0;
-		for (String s: ballotResultCount.keySet()){
-			System.out.println("Pairwise Comparison [" + s + "]: " + ballotResultCount.get(s));
-			score += (ballotResultCount.get(s) * distance("abc", s));
-		}
-		System.out.println("Total Score: " + score);
-		System.out.println("Avg Distance Overall: " + (score / 50.0));
-		System.out.println("Avg Distance Bad: " + (score / (50.0 - ballotResultCount.get("abc"))));
-		ballotResultCount.clear();
-		
-		
-		
-		
-		System.out.println("Running Borda Count Scheme");
-		for (int i = 0; i < 50; ++i){
-			BSW [] kys = initIdealVoters(100, "abc", 33, 0.55, 0.9);
-			
-			
-			for (BSW k: kys) {
-				k.bswScheme = new BordaCount();
-				k.Start();
-			}
-			for (BSW k: kys) {
-				try {
-					k.runner.join();
-					ballotResult.add(String.join("", k.maxRank));
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			for (String s: ballotResult.toArray(new String[ballotResult.size()])){
-				Integer count = ballotResultCount.get(s);
-				ballotResultCount.put(s, count != null ? count+1 : 1);
-			}
-			ballotResult.clear();
-		}
-		score  = 0;
-		for (String s: ballotResultCount.keySet()){
-			System.out.println("Borda Count [" + s + "]: " + ballotResultCount.get(s));
-			score += (ballotResultCount.get(s) * distance("abc", s));
-		}
-		System.out.println("Total Score: " + score);
-		System.out.println("Avg Distance Overall: " + (score / 50.0));
-		System.out.println("Avg Distance Bad: " + (score / (50.0 - ballotResultCount.get("abc"))));
-		ballotResultCount.clear();
-		
-		
-		
-		
-		System.out.println("Running Place Plurality Scheme");
-		for (int i = 0; i < 50; ++i){
-			BSW [] kys = initIdealVoters(100, "abc", 33, 0.55, 0.9);
-			
-			
-			for (BSW k: kys) {
-				k.bswScheme = new PlacePlurality();
-				k.Start();
-			}
-			for (BSW k: kys) {
-				try {
-					k.runner.join();
-					ballotResult.add(String.join("", k.maxRank));
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			for (String s: ballotResult.toArray(new String[ballotResult.size()])){
-				Integer count = ballotResultCount.get(s);
-				ballotResultCount.put(s, count != null ? count+1 : 1);
-			}
-			ballotResult.clear();
-		}
-		score  = 0;
-		for (String s: ballotResultCount.keySet()){
-			System.out.println("Place Plurality [" + s + "]: " + ballotResultCount.get(s));
-			score += (ballotResultCount.get(s) * distance("abc", s));
-		}
-		System.out.println("Total Score: " + score);
-		System.out.println("Avg Distance Overall: " + (score / 50.0));
-		System.out.println("Avg Distance Bad: " + (score / (50.0 - ballotResultCount.get("abc"))));
-		ballotResultCount.clear();
-		
-		
-		
-		System.out.println("Running Pruned Kemeny Young Scheme");
-		for (BSW k: kys){
-			k.bswScheme = new PrunedKemenyYoung();
-			//k.cleanUp();
-		}
-		for (BSW k: kys) {
-			k.Start();
-		}
-		for (BSW k: kys) {
-			try {
-				k.runner.join();
-				resultBallot.add(String.join("", k.maxRank));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		for (String s: resultBallot.toArray(new String[resultBallot.size()]))
-			System.out.println(s);
-		resultBallot.clear();
-		
-		
-		
-		
-		System.out.println("Running Pairwise Comparison Scheme");
-		for (BSW k: kys){
-			k.bswScheme = new PairwiseComparison();
-			//k.cleanUp();
-		}
-		for (BSW k: kys) {
-			k.Start();
-		}
-		for (BSW k: kys) {
-			try {
-				k.runner.join();
-				resultBallot.add(String.join("", k.maxRank));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		for (String s: resultBallot.toArray(new String[resultBallot.size()]))
-			System.out.println(s);
-		resultBallot.clear();
-		
-		
-		System.out.println("Running Borda Count Scheme");
-		for (BSW k: kys){
-			k.bswScheme = new BordaCount();
-			//k.cleanUp();
-		}
-		for (BSW k: kys) {
-			k.Start();
-		}
-		for (BSW k: kys) {
-			try {
-				k.runner.join();
-				resultBallot.add(String.join("", k.maxRank));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		for (String s: resultBallot.toArray(new String[resultBallot.size()]))
-			System.out.println(s);
-		resultBallot.clear();
-		
-		
-		
-		System.out.println("Running Place Plurality Scheme");
-		for (BSW k: kys){
-			k.bswScheme = new PlacePlurality();
-			//k.cleanUp();
-		}
-		for (BSW k: kys) {
-			k.Start();
-		}
-		for (BSW k: kys) {
-			try {
-				k.runner.join();
-				resultBallot.add(String.join("", k.maxRank));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		for (String s: resultBallot.toArray(new String[resultBallot.size()]))
-			System.out.println(s);
-		resultBallot.clear();
-		
-		*/
+
 		
     }
 	
