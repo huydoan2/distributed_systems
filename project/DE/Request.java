@@ -12,11 +12,15 @@ public class Request implements Serializable {
 	private int pid;
 	private boolean doneReq;
 	private byte[] secretKey;
+	private byte [] IV;
+	
 	private SecureTransfer secure;
 	private VoteType voteType = VoteType.MY_VOTE;
 	private String firstChoice, secondChoice;
 	private String [] ballot;
 	private HashMap<Integer, List<String>> topChoices;
+	
+	
 	
 	public Request(int pid, String voteValue){
 		this.pid = pid;
@@ -39,6 +43,13 @@ public class Request implements Serializable {
 		this.pid = pid;
 		this.secure = secure;
 	}
+	
+	public Request(int pid, byte [] key, byte [] IV){
+		this.IV = IV;
+		this.secretKey = key;
+		this.pid = pid;
+	}
+
 	
 	public Request(int pid, String firstChoice, String secondChoice) {
 		voteType = VoteType.TOP_TWO;
@@ -72,6 +83,8 @@ public class Request implements Serializable {
 		return pid;
 	}
 	
+	
+	
 	public String getVoteValue() {
 		return voteValue;
 	}
@@ -82,6 +95,10 @@ public class Request implements Serializable {
 	
 	public byte[] getKey(){
 		return secretKey;
+	}
+	
+	public byte [] getIV(){
+		return IV;
 	}
 	
 	public SecureTransfer getSecure(){

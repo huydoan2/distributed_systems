@@ -113,7 +113,7 @@ public class BscAlpha implements  Runnable, BSCRMI{
 
             try{
             	 Request request = new Request(pid, secure.encrypt(T[pid]));
-            	 secure.decrypt(secure.getKey(), secure.encrypt(T[pid]));
+            	 //secure.decrypt(secure.getKey(), secure.encrypt(T[pid]));
             	 Response response = Call("Vote", request, j);
             	 // Received encrypted vote as response
             	 // Store this vote

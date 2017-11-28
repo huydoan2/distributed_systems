@@ -10,16 +10,21 @@ import util.ElectionUtils;
 
 public class ElectionRunner {
 
+	private static final String IDEAL_RANKING = "abc";
+	private static final int BALLOTS = 10;
+	private static final int VOTERS = 25;
+	private static final int FAULTY = 5;
+	private static final double BAD_PROB = 0.9;
+	
 	static void runScheme(String schemeName, String ideal, double goodProb){
-		
+
 		HashMap<String, Integer> ballotResultCount = new HashMap<>();
 		HashSet<String> ballotResult = new HashSet<String>();
 		System.out.println("==========================================================");
 
 		System.out.println("Running " + schemeName);
-		for (int i = 0; i < 50; ++i){
-			BSW [] kys = initIdealVoters(100, ideal, 33, goodProb, 0.9);
-			
+		for (int i = 0; i < BALLOTS; ++i){
+			BSW [] kys = initIdealVoters(VOTERS, IDEAL_RANKING, FAULTY, goodProb, BAD_PROB);
 			
 			for (BSW k: kys) {
 				if (schemeName.equals("KY"))
@@ -43,6 +48,7 @@ public class ElectionRunner {
 					e.printStackTrace();
 				}
 			}
+			System.out.println("Round " + i + " Complete"); 
 			for (String s: ballotResult.toArray(new String[ballotResult.size()])){
 				Integer count = ballotResultCount.get(s);
 				ballotResultCount.put(s, count != null ? count+1 : 1);
@@ -53,11 +59,12 @@ public class ElectionRunner {
 		for (String s: ballotResultCount.keySet()){
 			score += (ballotResultCount.get(s) * distance(ideal, s));
 		}
-		System.out.println(schemeName + "," + goodProb + "," + (score / (50.0)) + "," + ideal.length());
-		System.out.println("Good Probability: " + goodProb);
+		//System.out.println(schemeName + "," + goodProb + "," + (score / (20.0)) + "," + ideal.length());
+		System.out.println("Scheme: " + schemeName);
 		System.out.println("Candidates: " + ideal.length());
+		System.out.println("Good Probability: " + goodProb);
 		System.out.println("Total Score: " + score);
-		System.out.println("Avg Distance Overall: " + (score / 50.0));
+		System.out.println("Avg Distance Overall: " + (score / (double) VOTERS));
 		
 	}
 	
@@ -73,7 +80,7 @@ public class ElectionRunner {
 		for (String scheme: schemes){
 			for (String ideal: ideals){
 				//Slowed to check for faults
-				for (double goodProb = 0.55; goodProb < 0.95; goodProb += 0.05){
+				for (double goodProb = 0.50; goodProb < 0.95; goodProb += 0.20){
 					final long startTime = System.currentTimeMillis();
 					runScheme(scheme, ideal, goodProb);
 					final long endTime = System.currentTimeMillis();

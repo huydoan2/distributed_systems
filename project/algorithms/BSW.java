@@ -67,7 +67,7 @@ public class BSW implements Runnable, BSCRMI{
     
     // Timeout for getting response
     // Makes sure node can tolerate byzantine node not sending any value
-    static {
+    /*static {
     	try {
 			RMISocketFactory.setSocketFactory( new RMISocketFactory()
 			{
@@ -91,7 +91,7 @@ public class BSW implements Runnable, BSCRMI{
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-    }
+    }*/
     
     public BSW(int pid, String[] peers, int[] ports, String k, int faulty, BSWScheme algo){
         this.pid = pid;
@@ -203,8 +203,10 @@ public class BSW implements Runnable, BSCRMI{
 		// Print out votes when all received and non decrypted
 		try {
 			this.receivedKeys.getAndIncrement();
-			ballot[req.getPid()] = req.getSecure().
-									decrypt(ballot[req.getPid()]);
+			ballot[req.getPid()] = SecureTransfer.decrypt(ballot[req.getPid()], req.getKey(), req.getIV());
+			
+			/*ballot[req.getPid()] = req.getSecure().
+									decrypt(ballot[req.getPid()]);*/
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -276,11 +278,20 @@ public class BSW implements Runnable, BSCRMI{
 				if (s == null)
 					ballotComplete = false;
 			if (!ballotComplete){
+				//long startTime = System.currentTimeMillis();
 				cleanUp();
 				barrier.await();
+				//long endTime = System.currentTimeMillis();
+				/*if (pid == 0)
+					System.out.println("cleanUp time: " + (endTime - startTime) );*/
+				
+				//startTime = System.currentTimeMillis();
 				exchangeVotes();
+				//endTime = System.currentTimeMillis();
+				/*if (pid == 0)
+					System.out.println("exchangeVotes time: " + (endTime - startTime) );
+				*/
 				exchangeBallots();
-					
 			}
 			
  			/*HashMap<Integer, List<String>> topTwoVotes = TopTwoVotes();
@@ -311,15 +322,7 @@ public class BSW implements Runnable, BSCRMI{
 		if (pid == 0)
 			maxRank = bswScheme.runAlgoritm(ballot, faulty).split("");
 		
-		/*StringBuilder sb = new StringBuilder();
-		sb.append("[ ");
-		for (String a: maxRank){
-			sb.append(a + " ");
-		}
-		sb.append(']');
-		System.out.println("Kemeny Young Score Result: " + pid);
-		System.out.println(sb.toString());
-		System.out.println("");*/
+
 	}
 	
 	
@@ -594,12 +597,22 @@ public class BSW implements Runnable, BSCRMI{
         //System.out.println("Waiting to get all votes");
         //waitForVotes();
     	// Wait for everyone to send done
-    	broadcastAndWaitForDones();     
+        //long startTime = System.currentTimeMillis();
+        broadcastAndWaitForDones();   
+		//long endTime = System.currentTimeMillis();
+		/*if (pid == 0)
+			System.out.println("broadcastAndWaitForDones time: " + (endTime - startTime) );*/
+		
+    	  
     	// No need for decryption    
 		// All have received all votes, broadcast keys
         // Wait to receive votes from everyone, inform everyone
+		//startTime = System.currentTimeMillis();
         broadcastAndWaitForKeys();
-        
+        //endTime = System.currentTimeMillis();
+        /*if (pid == 0)
+			System.out.println("broadcastAndWaitForKeys time: " + (endTime - startTime) );
+        */
 	}
 
 
@@ -642,7 +655,9 @@ public class BSW implements Runnable, BSCRMI{
         	if (i == this.pid)
         		continue;
 
-        	Request request = new Request(this.pid, secure);
+        	Request request = new Request(this.pid, secure.getKey(), secure.getIV());
+        	//Request request = new Request(this.pid, this.secure);
+        	
         	Call("Key", request, i);
         }
 		while (this.receivedKeys.get() == 0 ||  (this.receivedKeys.get() % (peers.length - 1)) != 0) {

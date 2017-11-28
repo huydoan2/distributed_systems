@@ -29,6 +29,10 @@ public class SecureTransfer implements Serializable{
 		return secretKey;
 	}
 	
+	public byte[] getIV(){
+		return initVector;
+	}
+	
     public  String encrypt(String value) {
         try {
             IvParameterSpec iv = new IvParameterSpec(initVector);
@@ -47,10 +51,10 @@ public class SecureTransfer implements Serializable{
         return null;
     }
 
-    public  String decrypt(byte[] key, String encrypted) {
+    public  static String decrypt(String encrypted, byte[] seckey, byte[] IV) {
         try {
-            IvParameterSpec iv = new IvParameterSpec(initVector);
-            SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
+            IvParameterSpec iv = new IvParameterSpec(IV);
+            SecretKeySpec skeySpec = new SecretKeySpec(seckey, "AES");
 
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
             cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
